@@ -1,4 +1,4 @@
-# Icefog App README
+# Colleagues README
 
 - [ ] TODO Replace or update this README with instructions relevant to your application
 
@@ -30,6 +30,6 @@ docker build --secret id=proKey,src=$HOME/.vaadin/proKey .
 ## Getting Started
 
 The [Getting Started](https://vaadin.com/docs/latest/getting-started) guide will quickly familiarize you with your new
-Icefog App implementation. You'll learn how to set up your development environment, understand the project 
+Colleagues App implementation. You'll learn how to set up your development environment, understand the project 
 structure, and find resources to help you add muscles to your skeleton — transforming it into a fully-featured 
 application.

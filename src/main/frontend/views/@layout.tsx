@@ -9,7 +9,7 @@ function Header() {
   return (
     <div className="flex p-m gap-m items-center" slot="drawer">
       <Icon icon="vaadin:cubes" className="text-primary icon-l" />
-      <span className="font-semibold text-l">Icefog App</span>
+      <span className="font-semibold text-l">Colleagues App</span>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-package com.koodivaara.taskmanagement;
+package com.example.task;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;

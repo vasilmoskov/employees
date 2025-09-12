@@ -1,4 +1,4 @@
-package com.koodivaara.taskmanagement;
+package com.example.task;
 
 import jakarta.persistence.*;
 import org.jspecify.annotations.Nullable;

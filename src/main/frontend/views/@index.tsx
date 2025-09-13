@@ -1,6 +1,6 @@
 import {useRef, useState} from 'react';
 import {Button, Grid, GridColumn, Notification} from '@vaadin/react-components';
-import {processCsv} from 'Frontend/generated/EmployeeCollaborationService';
+import {processFile} from 'Frontend/generated/EmployeesCommonProjectService';
 
 export default function EmployeeCollaborationView() {
     const [file, setFile] = useState<File | null>(null);
@@ -27,7 +27,7 @@ export default function EmployeeCollaborationView() {
         try {
             const arrayBuffer = await file.arrayBuffer();
             const uint8Array = new Uint8Array(arrayBuffer);
-            const data = await processCsv(Array.from(uint8Array));
+            const data = await processFile(Array.from(uint8Array));
             setResults(data || []);
             Notification.show('File processed successfully', {
                 duration: 3000,
@@ -43,7 +43,7 @@ export default function EmployeeCollaborationView() {
 
     return (
         <main className="w-full h-full flex flex-col box-border gap-s p-m">
-            <h1 className="text-xl m-0 font-light">Employee Collaboration</h1>
+            <h1 className="text-xl m-0 font-light">Employees Common Projects</h1>
             <div className="flex flex-col gap-s items-start">
                 <div className="flex gap-s items-center">
                     <input

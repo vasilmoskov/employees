@@ -1,5 +1,7 @@
-package com.example.filereader;
+package com.example.service;
 
+import com.example.model.Employee;
+import com.example.model.EmployeesCommonProject;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import org.slf4j.Logger;
@@ -16,12 +18,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CSVFileReader {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CSVFileReader.class);
+public class EmployeesCommonProjectCsvExtractor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmployeesCommonProjectCsvExtractor.class);
 
     private static final String DATE_FORMAT = "yyyy-MM-dd";
 
-    public static List<EmployeesCommonProject> extractEmployeesCommonProjectsFromFile(String fileName) {
+    public static List<EmployeesCommonProject> extractFromFile(String fileName) {
         Map<Long, List<Employee>> projectIDsToEmployees = extractProjectIdsToEmployeesFromFile(fileName);
 
         Long emp1Id = null;
@@ -42,8 +44,8 @@ public class CSVFileReader {
                         Employee employee2 = employeesInProject.get(j);
 
                         Long daysWorkedTogether = calculateDaysWorkedTogether(
-                                employee1.getDateFrom(), employee1.getDateTo(),
-                                employee2.getDateFrom(), employee2.getDateTo()
+                                employee1.dateFrom(), employee1.dateTo(),
+                                employee2.dateFrom(), employee2.dateTo()
                         );
 
                         if (daysWorkedTogether != null) {
@@ -52,11 +54,11 @@ public class CSVFileReader {
 
                             if (daysWorkedTogether > longestPeriodOfWorkingTogether) {
                                 longestPeriodOfWorkingTogether = daysWorkedTogether;
-                                emp1Id = employee1.getId();
-                                emp2Id = employee2.getId();
+                                emp1Id = employee1.id();
+                                emp2Id = employee2.id();
                             }
 
-                            EmployeesCommonProject commonProject = new EmployeesCommonProject(employee1.getId(), employee2.getId(), projectId, daysWorkedTogether);
+                            EmployeesCommonProject commonProject = new EmployeesCommonProject(employee1.id(), employee2.id(), projectId, daysWorkedTogether);
                             commonProjects.add(commonProject);
                         }
                     }

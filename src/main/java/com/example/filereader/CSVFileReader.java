@@ -6,9 +6,7 @@ import com.opencsv.exceptions.CsvValidationException;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.time.Duration;
 import java.time.LocalDate;
-import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -17,11 +15,11 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class CSVFileReader {
-    public static void main(String[] args) {
+    public static List<EmployeesCommonProject> processFile(String fileName) {
         Map<Long, List<Employee>> projectIDsToEmployees = new TreeMap<>();
         String format = "yyyy-MM-dd";
 
-        try (CSVReader csvReader = new CSVReader(new FileReader("C:\\Users\\User\\Downloads\\employees.csv"))) {
+        try (CSVReader csvReader = new CSVReader(new FileReader(fileName))) {
             String[] headers = csvReader.readNext();
 
             String[] line = csvReader.readNext();
@@ -145,6 +143,8 @@ public class CSVFileReader {
         for (EmployeesCommonProject commonProject : commonProjects) {
             System.out.printf("%d, %d, %d, %d%n", commonProject.getEmp1Id(), commonProject.getEmp2Id(), commonProject.getProjectId(), commonProject.getDaysWorkedTogether());
         }
+
+        return commonProjects;
     }
 
 }

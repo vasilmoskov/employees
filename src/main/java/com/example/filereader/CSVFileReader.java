@@ -2,6 +2,8 @@ package com.example.filereader;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -10,17 +12,72 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class CSVFileReader {
-    public static List<EmployeesCommonProject> processFile(String fileName) {
-        Map<Long, List<Employee>> projectIDsToEmployees = new TreeMap<>();
-        String format = "yyyy-MM-dd";
+    private static final Logger LOGGER = LoggerFactory.getLogger(CSVFileReader.class);
+
+    private static final String DATE_FORMAT = "yyyy-MM-dd";
+
+    public static List<EmployeesCommonProject> extractEmployeesCommonProjectsFromFile(String fileName) {
+        Map<Long, List<Employee>> projectIDsToEmployees = extractProjectIdsToEmployeesFromFile(fileName);
+
+        Long emp1Id = null;
+        Long emp2Id = null;
+        long longestPeriodOfWorkingTogether = Long.MIN_VALUE;
+
+        List<EmployeesCommonProject> commonProjects = new ArrayList<>();
+
+        for (Map.Entry<Long, List<Employee>> entry : projectIDsToEmployees.entrySet()) {
+            List<Employee> employeesInProject = entry.getValue();
+
+            if (employeesInProject.size() > 1) {
+                for (int i = 0; i < employeesInProject.size() - 1; i++) { 
+                    for (int j = i + 1; j < employeesInProject.size(); j++) { 
+                        Long projectId = entry.getKey();
+
+                        Employee employee1 = employeesInProject.get(i);
+                        Employee employee2 = employeesInProject.get(j);
+
+                        Long daysWorkedTogether = calculateDaysWorkedTogether(
+                                employee1.getDateFrom(), employee1.getDateTo(),
+                                employee2.getDateFrom(), employee2.getDateTo()
+                        );
+
+                        if (daysWorkedTogether != null) {
+                            // make interval inclusive
+                            daysWorkedTogether++;
+
+                            if (daysWorkedTogether > longestPeriodOfWorkingTogether) {
+                                longestPeriodOfWorkingTogether = daysWorkedTogether;
+                                emp1Id = employee1.getId();
+                                emp2Id = employee2.getId();
+                            }
+
+                            EmployeesCommonProject commonProject = new EmployeesCommonProject(employee1.getId(), employee2.getId(), projectId, daysWorkedTogether);
+                            commonProjects.add(commonProject);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (emp1Id != null && emp2Id != null) {
+            LOGGER.info("Longest period working together:");
+            LOGGER.info("{}, {}, {}", emp1Id, emp2Id, longestPeriodOfWorkingTogether);
+        }
+
+        return commonProjects;
+    }
+
+    private static Map<Long, List<Employee>> extractProjectIdsToEmployeesFromFile(String fileName) {
+        Map<Long, List<Employee>> projectIDsToEmployees = new HashMap<>();
 
         try (CSVReader csvReader = new CSVReader(new FileReader(fileName))) {
-            String[] headers = csvReader.readNext();
+            // skip first line as it is header
+            csvReader.readNext();
 
             String[] line = csvReader.readNext();
 
@@ -30,11 +87,11 @@ public class CSVFileReader {
                 String dateFromAsString = line[2].trim();
                 String dateToAsString = line[3].trim();
 
-                LocalDate dateFrom = LocalDate.parse(dateFromAsString, DateTimeFormatter.ofPattern(format));
+                LocalDate dateFrom = LocalDate.parse(dateFromAsString, DateTimeFormatter.ofPattern(DATE_FORMAT));
 
                 LocalDate dateTo = dateToAsString.equals("NULL") ?
                         LocalDate.now() :
-                        LocalDate.parse(dateToAsString, DateTimeFormatter.ofPattern(format));
+                        LocalDate.parse(dateToAsString, DateTimeFormatter.ofPattern(DATE_FORMAT));
 
                 projectIDsToEmployees.putIfAbsent(projectId, new ArrayList<>());
 
@@ -47,104 +104,50 @@ public class CSVFileReader {
             }
 
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            LOGGER.error("No such file.", e);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            LOGGER.error("An error has occurred during file processing.", e);
         } catch (CsvValidationException e) {
-            throw new RuntimeException(e);
+            LOGGER.error("The provided CSV file is invalid.", e);
         }
 
-        Long emp1Id = null;
-        Long emp2Id = null;
-        Long longestPeriodOfWorkingTogether = Long.MIN_VALUE;
-
-        // return: Employee ID 1, Employee ID 2, Project ID, Days Worked
-        List<EmployeesCommonProject> commonProjects = new ArrayList<>();
-
-        for (Map.Entry<Long, List<Employee>> entry : projectIDsToEmployees.entrySet()) {
-
-            List<Employee> employeesInProject = entry.getValue();
-
-            if (employeesInProject.size() > 1) {
-
-                for (int i = 0; i < employeesInProject.size() - 1; i++) { // todo: check for indexoutofboundsEx
-                    for (int j = i + 1; j < employeesInProject.size(); j++) { // todo: check for indexoutofboundsEx
-                        Long projectId = entry.getKey();
-
-                        Employee employee1 = employeesInProject.get(i);
-                        Employee employee2 = employeesInProject.get(j);
-
-                        LocalDate employee1DateFrom = employee1.getDateFrom();
-                        LocalDate employee1DateTo = employee1.getDateTo();
-
-                        LocalDate employee2DateFrom = employee2.getDateFrom();
-                        LocalDate employee2DateTo = employee2.getDateTo();
-
-                        Long daysWorkedTogether = null;
-
-                        if (employee1DateFrom.isBefore(employee2DateFrom)) {
-                            if (employee2DateFrom.isAfter(employee1DateTo)) {
-                                continue;
-                            }
-
-                            if (employee2DateFrom.isBefore(employee1DateTo) || employee2DateFrom.isEqual(employee1DateTo)) {
-                                if (employee1DateTo.isBefore(employee2DateTo)) {
-                                    daysWorkedTogether = ChronoUnit.DAYS.between(employee2DateFrom, employee1DateTo);
-                                } else {
-                                    daysWorkedTogether = ChronoUnit.DAYS.between(employee2DateFrom, employee2DateTo);
-                                }
-                            }
-
-                        } else if (employee1DateFrom.isAfter(employee2DateFrom)) {
-                            if (employee1DateFrom.isAfter(employee2DateTo)) {
-                                continue;
-                            }
-
-                            if (employee1DateFrom.isBefore(employee2DateTo) || employee2DateFrom.isEqual(employee1DateTo)) {
-                                if (employee1DateTo.isBefore(employee2DateTo)) {
-                                    daysWorkedTogether = ChronoUnit.DAYS.between(employee1DateFrom, employee1DateTo);
-                                } else {
-                                    daysWorkedTogether = ChronoUnit.DAYS.between(employee1DateFrom, employee2DateTo);
-                                }
-                            }
-
-                        } else if (employee1DateFrom.isEqual(employee2DateFrom)) {
-                            if (employee1DateTo.isBefore(employee2DateTo)) {
-                                daysWorkedTogether = ChronoUnit.DAYS.between(employee1DateFrom, employee1DateTo);
-                            } else {
-                                daysWorkedTogether = ChronoUnit.DAYS.between(employee1DateFrom, employee2DateTo); // todo: check if they are equal
-                            }
-                        }
-
-                        if (daysWorkedTogether != null) {
-                            daysWorkedTogether++; // todo: explain
-                            if (daysWorkedTogether > longestPeriodOfWorkingTogether) {
-                                longestPeriodOfWorkingTogether = daysWorkedTogether;
-                                emp1Id = employee1.getId();
-                                emp2Id = employee2.getId();
-                            }
-
-                            EmployeesCommonProject commonProject = new EmployeesCommonProject(employee1.getId(), employee2.getId(), projectId, daysWorkedTogether);
-                            commonProjects.add(commonProject);
-                        }
-                    }
-                }
-
-            }
-
-        }
-
-        if (emp1Id != null && emp2Id != null) {
-            System.out.printf("Longest Period working together: %d, %d, %d%n", emp1Id, emp2Id, longestPeriodOfWorkingTogether);
-        }
-
-        System.out.println("Employee ID #1, Employee ID #2, Project ID, Days worked");
-
-        for (EmployeesCommonProject commonProject : commonProjects) {
-            System.out.printf("%d, %d, %d, %d%n", commonProject.getEmp1Id(), commonProject.getEmp2Id(), commonProject.getProjectId(), commonProject.getDaysWorkedTogether());
-        }
-
-        return commonProjects;
+        return projectIDsToEmployees;
     }
 
+    private static Long calculateDaysWorkedTogether(LocalDate employee1DateFrom, LocalDate employee1DateTo,
+                                                    LocalDate employee2DateFrom, LocalDate employee2DateTo) {
+        Long daysWorkedTogether = null;
+
+        if (employee1DateFrom.isBefore(employee2DateFrom)) {
+            if (employee2DateFrom.isAfter(employee1DateTo)) {
+                return null;
+            }
+
+            if (employee1DateTo.isBefore(employee2DateTo)) {
+                daysWorkedTogether = ChronoUnit.DAYS.between(employee2DateFrom, employee1DateTo);
+            } else {
+                daysWorkedTogether = ChronoUnit.DAYS.between(employee2DateFrom, employee2DateTo);
+            }
+
+        } else if (employee1DateFrom.isAfter(employee2DateFrom)) {
+            if (employee1DateFrom.isAfter(employee2DateTo)) {
+                return null;
+            }
+
+            if (employee1DateTo.isBefore(employee2DateTo)) {
+                daysWorkedTogether = ChronoUnit.DAYS.between(employee1DateFrom, employee1DateTo);
+            } else {
+                daysWorkedTogether = ChronoUnit.DAYS.between(employee1DateFrom, employee2DateTo);
+            }
+
+        } else if (employee1DateFrom.isEqual(employee2DateFrom)) {
+            if (employee1DateTo.isBefore(employee2DateTo)) {
+                daysWorkedTogether = ChronoUnit.DAYS.between(employee1DateFrom, employee1DateTo);
+            } else {
+                daysWorkedTogether = ChronoUnit.DAYS.between(employee1DateFrom, employee2DateTo);
+            }
+        }
+
+        return daysWorkedTogether;
+    }
 }

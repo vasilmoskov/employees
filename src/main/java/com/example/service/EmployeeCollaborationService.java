@@ -1,5 +1,7 @@
-package com.example.filereader;
+package com.example.service;
 
+import com.example.filereader.CSVFileReader;
+import com.example.filereader.EmployeesCommonProject;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.hilla.BrowserCallable;
 import java.io.File;
@@ -17,6 +19,6 @@ public class EmployeeCollaborationService {
             fos.write(fileBytes);
         }
 
-        return CSVFileReader.processFile(tempFile.getAbsolutePath());
+        return CSVFileReader.extractEmployeesCommonProjectsFromFile(tempFile.getAbsolutePath());
     }
 }

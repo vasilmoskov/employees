@@ -1,7 +1,6 @@
-package com.example.service;
+package com.example.extractor;
 
 import com.example.model.Employee;
-import com.example.model.EmployeesCommonProject;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import org.slf4j.Logger;
@@ -10,25 +9,15 @@ import org.slf4j.LoggerFactory;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class EmployeesCommonProjectCsvExtractor {
+public class EmployeesCommonProjectCsvExtractor extends EmployeesCommonProjectExtractor {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmployeesCommonProjectCsvExtractor.class);
 
-    private static final String DATE_FORMAT = "yyyy-MM-dd";
-
-    public static List<EmployeesCommonProject> extractFromFile(String fileName) {
-        Map<Long, List<Employee>> projectIDsToEmployees = extractProjectIdsToEmployeesFromFile(fileName);
-
-        return EmployeesCommonProjectCalculator.calculate(projectIDsToEmployees);
-    }
-
-    private static Map<Long, List<Employee>> extractProjectIdsToEmployeesFromFile(String fileName) {
+    @Override
+    protected Map<Long, List<Employee>> extractProjectIdsToEmployeesFromFile(String fileName) {
         Map<Long, List<Employee>> projectIDsToEmployees = new HashMap<>();
 
         try (CSVReader csvReader = new CSVReader(new FileReader(fileName))) {
@@ -43,18 +32,7 @@ public class EmployeesCommonProjectCsvExtractor {
                 String dateFromAsString = line[2].trim();
                 String dateToAsString = line[3].trim();
 
-                LocalDate dateFrom = LocalDate.parse(dateFromAsString, DateTimeFormatter.ofPattern(DATE_FORMAT));
-
-                LocalDate dateTo = dateToAsString.equals("NULL") ?
-                        LocalDate.now() :
-                        LocalDate.parse(dateToAsString, DateTimeFormatter.ofPattern(DATE_FORMAT));
-
-                projectIDsToEmployees.putIfAbsent(projectId, new ArrayList<>());
-
-                // this check ensures that Date From is not after Date To which would be invalid case
-                if (!dateFrom.isAfter(dateTo)) {
-                    projectIDsToEmployees.get(projectId).add(new Employee(employeeId, dateFrom, dateTo));
-                }
+                populateProjectsToEmployess(dateFromAsString, dateToAsString, employeeId, projectId, projectIDsToEmployees);
 
                 line = csvReader.readNext();
             }

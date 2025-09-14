@@ -1,4 +1,4 @@
-package com.example.service;
+package com.example.extractor;
 
 import com.example.model.Employee;
 import com.example.model.EmployeesCommonProject;
@@ -6,15 +6,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class EmployeesCommonProjectCalculator {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmployeesCommonProjectCalculator.class);
+public abstract class EmployeesCommonProjectExtractor {
+    private static final String DATE_FORMAT = "yyyy-MM-dd";
 
-    public static List<EmployeesCommonProject> calculate(Map<Long, List<Employee>> projectIDsToEmployees) {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmployeesCommonProjectExtractor.class);
+
+    public List<EmployeesCommonProject> extractFromFile(String fileName) {
+        Map<Long, List<Employee>> projectIDsToEmployees = extractProjectIdsToEmployeesFromFile(fileName);
+
         Long emp1Id = null;
         Long emp2Id = null;
         long longestPeriodOfWorkingTogether = Long.MIN_VALUE;
@@ -63,7 +68,25 @@ public class EmployeesCommonProjectCalculator {
         return commonProjects;
     }
 
-    private static Long calculateDaysWorkedTogether(LocalDate employee1DateFrom, LocalDate employee1DateTo,
+    protected abstract Map<Long, List<Employee>> extractProjectIdsToEmployeesFromFile(String fileName);
+
+    protected void populateProjectsToEmployess(String dateFromAsString, String dateToAsString, Long employeeId, Long projectId,
+                                               Map<Long, List<Employee>> projectIDsToEmployees) {
+        LocalDate dateFrom = LocalDate.parse(dateFromAsString, DateTimeFormatter.ofPattern(DATE_FORMAT));
+
+        LocalDate dateTo = dateToAsString.equals("NULL") ?
+                LocalDate.now() :
+                LocalDate.parse(dateToAsString, DateTimeFormatter.ofPattern(DATE_FORMAT));
+
+        projectIDsToEmployees.putIfAbsent(projectId, new ArrayList<>());
+
+        // this check ensures that Date From is not after Date To which would be invalid case
+        if (!dateFrom.isAfter(dateTo)) {
+            projectIDsToEmployees.get(projectId).add(new Employee(employeeId, dateFrom, dateTo));
+        }
+    }
+
+    private Long calculateDaysWorkedTogether(LocalDate employee1DateFrom, LocalDate employee1DateTo,
                                                     LocalDate employee2DateFrom, LocalDate employee2DateTo) {
         Long daysWorkedTogether = null;
         if (employee1DateFrom.isBefore(employee2DateFrom)) {
@@ -91,6 +114,7 @@ public class EmployeesCommonProjectCalculator {
                 daysWorkedTogether = ChronoUnit.DAYS.between(employee1DateFrom, employee2DateTo);
             }
         }
+
         return daysWorkedTogether;
     }
 }

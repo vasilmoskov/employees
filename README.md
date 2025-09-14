@@ -1,35 +1,22 @@
-# Colleagues README
+# Employees App
 
-- [ ] TODO Replace or update this README with instructions relevant to your application
+This project uses the **Hilla** framework, which combines a Spring Boot Java backend with a TypeScript frontend. Hilla enables seamless, type-safe communication between server and client for efficient full-stack development.
 
-To start the application in development mode, import it into your IDE and run the `Application` class. 
-You can also start the application from the command line by running: 
+## How Hilla Works
 
-```bash
-./mvnw
-```
-
-To build the application in production mode, run:
-
-```bash
-./mvnw -Pproduction package
-```
-
-To build a Docker image, run:
-
-```bash
-docker build -t my-application:latest .
-```
-
-If you use commercial components, pass the license key as a build secret:
-
-```bash
-docker build --secret id=proKey,src=$HOME/.vaadin/proKey .
-```
+- **Backend:** Spring Boot Java services expose endpoints.
+- **Frontend:** TypeScript UI (Lit or React) with types generated from Java code.
+- **Communication:** Type-safe API calls from frontend to backend, no manual REST API wiring.
 
 ## Getting Started
 
-The [Getting Started](https://vaadin.com/docs/latest/getting-started) guide will quickly familiarize you with your new
-Colleagues App implementation. You'll learn how to set up your development environment, understand the project 
-structure, and find resources to help you add muscles to your skeleton — transforming it into a fully-featured 
-application.
+1. **Import the project** into your IDE.
+2. **Start the application**:
+   - From IDE: Run the `Application` class.
+   - From command line:
+     ```bash
+     ./mvnw
+     ```
+3. **Open** [http://localhost:8080](http://localhost:8080) in your browser.
+
+For more, see the [Hilla documentation](https://hilla.dev/docs).

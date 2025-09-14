@@ -20,6 +20,8 @@ export default function EmployeeCollaborationView() {
             const name = files[0].name.toLowerCase();
             if (name.endsWith('.xml')) {
                 setFileType('xml');
+            } else if (name.endsWith('.json')) {
+                setFileType('json');
             } else {
                 setFileType('csv');
             }
@@ -56,7 +58,7 @@ export default function EmployeeCollaborationView() {
                 <div className="flex gap-s items-center">
                     <input
                         type="file"
-                        accept=".csv,.xml"
+                        accept=".csv,.xml,.json"
                         style={{display: 'none'}}
                         ref={fileInputRef}
                         onChange={handleFileChange}

@@ -4,6 +4,7 @@ import {processFile} from 'Frontend/generated/EmployeesCommonProjectService';
 
 export default function EmployeeCollaborationView() {
     const [file, setFile] = useState<File | null>(null);
+    const [fileType, setFileType] = useState<string>('csv');
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -16,8 +17,15 @@ export default function EmployeeCollaborationView() {
         const files = event.target.files;
         if (files && files.length > 0) {
             setFile(files[0]);
+            const name = files[0].name.toLowerCase();
+            if (name.endsWith('.xml')) {
+                setFileType('xml');
+            } else {
+                setFileType('csv');
+            }
         } else {
             setFile(null);
+            setFileType('csv');
         }
     };
 
@@ -27,7 +35,7 @@ export default function EmployeeCollaborationView() {
         try {
             const arrayBuffer = await file.arrayBuffer();
             const uint8Array = new Uint8Array(arrayBuffer);
-            const data = await processFile(Array.from(uint8Array));
+            const data = await processFile(Array.from(uint8Array), fileType);
             setResults(data || []);
             Notification.show('File processed successfully', {
                 duration: 3000,
@@ -48,7 +56,7 @@ export default function EmployeeCollaborationView() {
                 <div className="flex gap-s items-center">
                     <input
                         type="file"
-                        accept=".csv"
+                        accept=".csv,.xml"
                         style={{display: 'none'}}
                         ref={fileInputRef}
                         onChange={handleFileChange}

@@ -2,14 +2,15 @@ package com.example.service;
 
 import com.example.model.Employee;
 import com.example.model.EmployeesCommonProject;
-import com.opencsv.CSVReader;
-import com.opencsv.exceptions.CsvValidationException;
+import com.example.xml.EmployeeXml;
+import com.example.xml.EmployeesWrapper;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -17,8 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class EmployeesCommonProjectCsvExtractor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmployeesCommonProjectCsvExtractor.class);
+public class EmployeesCommonProjectXmlExtractor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmployeesCommonProjectXmlExtractor.class);
 
     private static final String DATE_FORMAT = "yyyy-MM-dd";
 
@@ -31,17 +32,19 @@ public class EmployeesCommonProjectCsvExtractor {
     private static Map<Long, List<Employee>> extractProjectIdsToEmployeesFromFile(String fileName) {
         Map<Long, List<Employee>> projectIDsToEmployees = new HashMap<>();
 
-        try (CSVReader csvReader = new CSVReader(new FileReader(fileName))) {
-            // skip first line as it is header
-            csvReader.readNext();
+        try {
+            JAXBContext context = JAXBContext.newInstance(EmployeesWrapper.class);
 
-            String[] line = csvReader.readNext();
+            EmployeesWrapper employeesWrapper = (EmployeesWrapper) context.createUnmarshaller()
+                    .unmarshal(new FileReader(fileName));
 
-            while (line != null) {
-                Long employeeId = Long.parseLong(line[0].trim());
-                Long projectId = Long.parseLong(line[1].trim());
-                String dateFromAsString = line[2].trim();
-                String dateToAsString = line[3].trim();
+            List<EmployeeXml> employees = employeesWrapper.getEmployees();
+
+            for (EmployeeXml employee : employees) {
+                String dateFromAsString = employee.getDateFrom();
+                String dateToAsString = employee.getDateTo();
+                Long projectId = employee.getProjectId();
+                Long employeeId = employee.getId();
 
                 LocalDate dateFrom = LocalDate.parse(dateFromAsString, DateTimeFormatter.ofPattern(DATE_FORMAT));
 
@@ -55,19 +58,14 @@ public class EmployeesCommonProjectCsvExtractor {
                 if (!dateFrom.isAfter(dateTo)) {
                     projectIDsToEmployees.get(projectId).add(new Employee(employeeId, dateFrom, dateTo));
                 }
-
-                line = csvReader.readNext();
             }
 
+        } catch (JAXBException e) {
+            LOGGER.error("The provided XML file is invalid.", e);
         } catch (FileNotFoundException e) {
             LOGGER.error("No such file.", e);
-        } catch (IOException e) {
-            LOGGER.error("An error has occurred during file processing.", e);
-        } catch (CsvValidationException e) {
-            LOGGER.error("The provided CSV file is invalid.", e);
         }
 
         return projectIDsToEmployees;
     }
-
 }

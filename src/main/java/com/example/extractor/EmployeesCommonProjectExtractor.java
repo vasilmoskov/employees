@@ -13,7 +13,12 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class EmployeesCommonProjectExtractor {
-    private static final String DATE_FORMAT = "yyyy-MM-dd";
+    private static final List<DateTimeFormatter> SUPPORTED_DATE_FORMATS = List.of(
+            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+            DateTimeFormatter.ofPattern("dd-MM-yyyy"),
+            DateTimeFormatter.ofPattern("MM/dd/yyyy"),
+            DateTimeFormatter.ofPattern("yyyy/MM/dd")
+    );
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmployeesCommonProjectExtractor.class);
 
@@ -72,11 +77,10 @@ public abstract class EmployeesCommonProjectExtractor {
 
     protected void populateProjectsToEmployess(String dateFromAsString, String dateToAsString, Long employeeId, Long projectId,
                                                Map<Long, List<Employee>> projectIDsToEmployees) {
-        LocalDate dateFrom = LocalDate.parse(dateFromAsString, DateTimeFormatter.ofPattern(DATE_FORMAT));
-
+        LocalDate dateFrom = parseDate(dateFromAsString);
         LocalDate dateTo = dateToAsString.equals("NULL") ?
                 LocalDate.now() :
-                LocalDate.parse(dateToAsString, DateTimeFormatter.ofPattern(DATE_FORMAT));
+                parseDate(dateToAsString);
 
         projectIDsToEmployees.putIfAbsent(projectId, new ArrayList<>());
 
@@ -84,6 +88,18 @@ public abstract class EmployeesCommonProjectExtractor {
         if (!dateFrom.isAfter(dateTo)) {
             projectIDsToEmployees.get(projectId).add(new Employee(employeeId, dateFrom, dateTo));
         }
+    }
+
+    private LocalDate parseDate(String dateString) {
+        for (DateTimeFormatter formatter : SUPPORTED_DATE_FORMATS) {
+            try {
+                return LocalDate.parse(dateString, formatter);
+            } catch (Exception ignored) {
+                // No-op
+            }
+        }
+
+        throw new IllegalArgumentException("Unsupported date format: " + dateString);
     }
 
     private Long calculateDaysWorkedTogether(LocalDate employee1DateFrom, LocalDate employee1DateTo,

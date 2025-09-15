@@ -2,6 +2,7 @@ package com.example.extractor;
 
 import com.example.model.Employee;
 import com.example.model.EmployeesCommonProject;
+import com.example.model.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,6 +10,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,11 +27,8 @@ public abstract class EmployeesCommonProjectExtractor {
     public List<EmployeesCommonProject> extractFromFile(String fileName) {
         Map<Long, List<Employee>> projectIDsToEmployees = extractProjectIdsToEmployeesFromFile(fileName);
 
-        Long emp1Id = null;
-        Long emp2Id = null;
-        long longestPeriodOfWorkingTogether = Long.MIN_VALUE;
-
         List<EmployeesCommonProject> commonProjects = new ArrayList<>();
+        Map<Pair, Long> totalDaysPerPair = new HashMap<>();
 
         for (Map.Entry<Long, List<Employee>> entry : projectIDsToEmployees.entrySet()) {
             List<Employee> employeesInProject = entry.getValue();
@@ -51,11 +50,11 @@ public abstract class EmployeesCommonProjectExtractor {
                             // make interval inclusive
                             daysWorkedTogether++;
 
-                            if (daysWorkedTogether > longestPeriodOfWorkingTogether) {
-                                longestPeriodOfWorkingTogether = daysWorkedTogether;
-                                emp1Id = employee1.id();
-                                emp2Id = employee2.id();
-                            }
+                            Pair pair = Pair.of(employee1.id(), employee2.id());
+                            totalDaysPerPair.putIfAbsent(pair, 0L);
+                            Long daysBeforeUpdate = totalDaysPerPair.get(pair);
+                            Long daysAfterUpdate = daysBeforeUpdate + daysWorkedTogether;
+                            totalDaysPerPair.put(pair, daysAfterUpdate);
 
                             EmployeesCommonProject commonProject = new EmployeesCommonProject(employee1.id(), employee2.id(), projectId, daysWorkedTogether);
                             commonProjects.add(commonProject);
@@ -65,9 +64,19 @@ public abstract class EmployeesCommonProjectExtractor {
             }
         }
 
-        if (emp1Id != null && emp2Id != null) {
-            LOGGER.info("Longest period working together:");
-            LOGGER.info("{}, {}, {}", emp1Id, emp2Id, longestPeriodOfWorkingTogether);
+        Pair longestPair = null;
+        long maxDays = 0;
+
+        for (Map.Entry<Pair, Long> entry : totalDaysPerPair.entrySet()) {
+            if (entry.getValue() > maxDays) {
+                maxDays = entry.getValue();
+                longestPair = entry.getKey();
+            }
+        }
+
+        if (longestPair != null ) {
+            LOGGER.info("Longest period working together (across all projects):");
+            LOGGER.info("{}, {}, {}", longestPair.emp1Id(), longestPair.emp2Id(), maxDays);
         }
 
         return commonProjects;

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Employees>
+    <Employee>
+        <EmpID>301</EmpID>
+        <ProjectID>100</ProjectID>
+        <DateFrom>2023-01-01</DateFrom>
+        <DateTo>2023-02-15</DateTo>
+    </Employee>
+    <Employee>
+        <EmpID>302</EmpID>
+        <ProjectID>100</ProjectID>
+        <DateFrom>2023-01-10</DateFrom>
+        <DateTo>2023-02-10</DateTo>
+    </Employee>
+    <Employee>
+        <EmpID>301</EmpID>
+        <ProjectID>200</ProjectID>
+        <DateFrom>2023-03-01</DateFrom>
+        <DateTo>2023-03-31</DateTo>
+    </Employee>
+    <Employee>
+        <EmpID>302</EmpID>
+        <ProjectID>200</ProjectID>
+        <DateFrom>2023-03-15</DateFrom>
+        <DateTo>2023-04-15</DateTo>
+    </Employee>
+    <Employee>
+        <EmpID>303</EmpID>
+        <ProjectID>200</ProjectID>
+        <DateFrom>2023-03-20</DateFrom>
+        <DateTo>2023-03-30</DateTo>
+    </Employee>
+</Employees>

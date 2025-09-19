@@ -1,0 +1,38 @@
+[
+  {
+    "EmpID": 401,
+    "ProjectID": 10,
+    "DateFrom": "2024-05-01",
+    "DateTo": "2024-06-15"
+  },
+  {
+    "EmpID": 402,
+    "ProjectID": 10,
+    "DateFrom": "2024-05-10",
+    "DateTo": "2024-06-01"
+  },
+  {
+    "EmpID": 401,
+    "ProjectID": 20,
+    "DateFrom": "2024-07-01",
+    "DateTo": "2024-07-31"
+  },
+  {
+    "EmpID": 403,
+    "ProjectID": 20,
+    "DateFrom": "2024-07-15",
+    "DateTo": "2024-08-15"
+  },
+  {
+    "EmpID": 402,
+    "ProjectID": 30,
+    "DateFrom": "2024-09-01",
+    "DateTo": "2024-10-01"
+  },
+  {
+    "EmpID": 403,
+    "ProjectID": 30,
+    "DateFrom": "2024-09-15",
+    "DateTo": "2024-09-30"
+  }
+]
